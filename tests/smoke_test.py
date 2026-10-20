@@ -37,12 +37,14 @@ def main():
             print(proc.stderr)
             raise AssertionError(f"diary.py exited with {proc.returncode}")
 
-        mp4 = out_dir / "day-999.mp4"
+        ep_dir = out_dir / "day-999"
+        mp4 = ep_dir / "video.mp4"
         assert mp4.exists(), "MP4 was not created"
         size = mp4.stat().st_size
         assert size > 20_000, f"MP4 suspiciously small: {size} bytes"
-        post = out_dir / "day-999-post.txt"
-        assert post.exists() and post.stat().st_size > 0, "ledger post missing"
+        for name in ("post.txt", "upload.txt", "cover.png", "script.json"):
+            f = ep_dir / name
+            assert f.exists() and f.stat().st_size > 0, f"{name} missing"
 
         probe = subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", "v:0",
@@ -55,7 +57,7 @@ def main():
         stream = info["streams"][0]
         assert duration > 3, f"duration too short: {duration}s"
         assert (stream["width"], stream["height"]) == (1280, 720), stream
-        print(f"✅ smoke test passed: {mp4.name} "
+        print(f"smoke test passed: {mp4.name} "
               f"{size / 1024:.0f} KiB, {duration:.1f}s, 1280x720")
     return 0
 

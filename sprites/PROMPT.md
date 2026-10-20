@@ -17,9 +17,16 @@ The PNGs shipped with the project are placeholders drawn in code by
    framing in every file — only the face changes. Consistency is what makes
    the character recognisable.
 2. **Format:** PNG with a transparent background, roughly 4:5 portrait
-   (the placeholders are 448×560). The renderer scales by height and anchors
-   the sprite's feet to the bottom of the dialogue box.
-3. **Image-generation prompt that works well** (for Midjourney / SDXL /
+   (the placeholders are 448×560). The renderer scales every sprite to 560 px
+   tall (pixel art under 200 px tall is scaled crisply) and tucks the feet
+   behind the dialogue box.
+3. **Optional animation frames.** For each expression you can add
+   `<expr>_talk.png` (mouth open) and `<expr>_blink.png` (eyes closed).
+   The renderer flaps between `<expr>.png` and `_talk` in time with the
+   voice, and blinks every few seconds. Without them the host still bobs
+   and hops, it just doesn't move its mouth. Easiest way: copy the base PNG
+   and repaint only the mouth / eyes so nothing else shifts.
+4. **Image-generation prompt that works well** (for Midjourney / SDXL /
    ComfyUI / any image model):
 
    > pixel art chibi girl, long orange hair, white blouse with black ribbon,
@@ -30,8 +37,8 @@ The PNGs shipped with the project are placeholders drawn in code by
    `shocked`, `sad`). If your tool cannot do transparent backgrounds, ask
    for a plain white background and remove it with any background-remover,
    or draw over a solid color and key it out.
-4. **Live2D / real art also works** — any PNG with transparency is fine.
+5. **Live2D / real art also works** — any PNG with transparency is fine.
    Pixel art is only the placeholder style, not a requirement.
-5. Drop the files in here with the exact names above. `diary.py` only
+6. Drop the files in here with the exact names above. `diary.py` only
    generates placeholders for files that are missing, so yours are never
    overwritten.

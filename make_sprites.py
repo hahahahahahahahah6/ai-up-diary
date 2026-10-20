@@ -5,7 +5,8 @@ make_sprites.py — generate placeholder pixel-art expression sprites with Pillo
 The character is drawn on a 32x40 pixel grid (a chibi host with long orange
 hair and a white/orange outfit) and upscaled with NEAREST so it stays crisp.
 
-Outputs: sprites/neutral.png, happy.png, smug.png, shocked.png, sad.png
+Outputs: sprites/<expr>.png plus <expr>_talk.png (mouth open) and
+<expr>_blink.png (eyes closed) for neutral, happy, smug, shocked, sad.
 
 These are PLACEHOLDERS. Drop your own PNGs with the same filenames into
 sprites/ and diary.py will use yours instead (it only generates the ones
@@ -131,7 +132,29 @@ def draw_expression(img, name):
     return img
 
 
-def build_sprite(name):
+def _clear(d, x, y, w, h):
+    _rect(d, x, y, w, h, "S")
+
+
+def draw_talk_mouth(img):
+    """Open mouth for lip-flap frames: 3 wide x 2 tall with a tongue pixel."""
+    d = ImageDraw.Draw(img)
+    _clear(d, 13, MOUTH_Y - 1, 5, 3)
+    _rect(d, 14, MOUTH_Y, 3, 1, "K")
+    _px(d, 14, MOUTH_Y + 1, "K"); _px(d, 15, MOUTH_Y + 1, "c"); _px(d, 16, MOUTH_Y + 1, "K")
+    return img
+
+
+def draw_blink(img):
+    """Closed eyes: a single dark line where each eye was."""
+    d = ImageDraw.Draw(img)
+    for ex, ey in (EYE_L, EYE_R):
+        _clear(d, ex, ey, 3, 3)
+        _rect(d, ex, ey + 2, 3, 1, "K")
+    return img
+
+
+def _base_grid():
     img = Image.new("RGBA", (GRID_W, GRID_H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     for y, row in enumerate(BASE_MAP):
@@ -139,23 +162,60 @@ def build_sprite(name):
         for x, ch in enumerate(row):
             if ch != ".":
                 d.point((x, y), fill=PALETTE[ch] + (255,))
-    img = draw_expression(img, name)
+    return img
+
+
+def build_sprite(name, talk=False, blink=False):
+    img = draw_expression(_base_grid(), name)
+    if talk:
+        draw_talk_mouth(img)
+    if blink and name != "happy":  # happy already has closed eyes
+        draw_blink(img)
     return img.resize((GRID_W * SCALE, GRID_H * SCALE), Image.NEAREST)
 
 
 EXPRESSIONS = ["neutral", "happy", "smug", "shocked", "sad"]
+VARIANTS = {"": {}, "_talk": {"talk": True}, "_blink": {"blink": True}}
+
+
+def _is_placeholder(path, name):
+    """True if the PNG on disk is exactly our generated placeholder."""
+    try:
+        on_disk = Image.open(path).convert("RGBA")
+    except Exception:
+        return False
+    ref = build_sprite(name)
+    return on_disk.size == ref.size and on_disk.tobytes() == ref.tobytes()
 
 
 def ensure_sprites(sprites_dir):
-    """Generate any missing placeholder sprites. Returns list of paths written."""
+    """
+    Generate any missing placeholder sprites. Returns list of paths written.
+
+    Talk (<expr>_talk.png) and blink (<expr>_blink.png) frames are generated
+    only for placeholder bases. If you drop in your own <expr>.png, add your
+    own _talk/_blink files too, or the host simply won't move its mouth.
+    """
     sprites_dir = Path(sprites_dir)
     sprites_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for name in EXPRESSIONS:
-        p = sprites_dir / f"{name}.png"
-        if not p.exists():
-            build_sprite(name).save(p)
-            written.append(p)
+        base = sprites_dir / f"{name}.png"
+        if not base.exists():
+            build_sprite(name).save(base)
+            written.append(base)
+        placeholder = None
+        for suffix, kw in VARIANTS.items():
+            if not suffix:
+                continue
+            p = sprites_dir / f"{name}{suffix}.png"
+            if p.exists():
+                continue
+            if placeholder is None:
+                placeholder = _is_placeholder(base, name)
+            if placeholder:
+                build_sprite(name, **kw).save(p)
+                written.append(p)
     return written
 
 

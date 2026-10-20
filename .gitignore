@@ -1,5 +1,6 @@
 __pycache__/
 .venv/
-output/*.mp4
-output/.work-day-*/
+output/*
 !output/.gitkeep
+input/comments.txt
+input/stats.json
