@@ -1,0 +1,5 @@
+__pycache__/
+.venv/
+output/*.mp4
+output/.work-day-*/
+!output/.gitkeep
