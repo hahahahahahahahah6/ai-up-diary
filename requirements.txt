@@ -1,0 +1,9 @@
+# Required: frame rendering
+Pillow>=10.0
+
+# Optional: free text-to-speech voices via Microsoft Edge's speech service.
+# Without it, episodes render silently (durations are estimated from text).
+edge-tts>=7.0.0
+
+# The full (API) mode needs no SDK — it talks to the Anthropic API with the
+# Python standard library only. Just set ANTHROPIC_API_KEY.
